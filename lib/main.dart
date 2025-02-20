@@ -29,8 +29,12 @@ class MainApp extends StatelessWidget {
 
 class NodeRendering extends StatefulWidget {
   final Node node;
-  final Node? parent;
-  const NodeRendering({super.key, required this.node, this.parent});
+  final VoidCallback? callback;
+  const NodeRendering({
+    super.key,
+    required this.node,
+    this.callback,
+  });
 
   @override
   State<NodeRendering> createState() => _NodeRenderingState();
@@ -38,10 +42,7 @@ class NodeRendering extends StatefulWidget {
 
 class _NodeRenderingState extends State<NodeRendering> {
   void _checkAllChildren(bool val, Node node) {
-    // widget.node.check(val);
-
     for (final node in node.children) {
-      // node.check(val);
       node.checked = val;
       _checkAllChildren(val, node);
     }
@@ -61,9 +62,11 @@ class _NodeRenderingState extends State<NodeRendering> {
             Checkbox(
               value: widget.node.checked,
               onChanged: (val) {
-                widget.node.checked = val ?? false;
-                _checkAllChildren(val ?? false, widget.node);
+                var check = val ?? false;
+                widget.node.checked = check;
+                _checkAllChildren(check, widget.node);
                 setState(() {});
+                widget.callback?.call();
               },
             ),
             Text(widget.node.title),
@@ -75,7 +78,13 @@ class _NodeRenderingState extends State<NodeRendering> {
               padding: const EdgeInsets.only(left: 30),
               child: NodeRendering(
                 node: child,
-                parent: widget.node,
+                callback: () {
+                  final allChildrenChecked = widget.node.children
+                      .every((element) => element.checked == true);
+                  widget.node.checked = allChildrenChecked;
+                  widget.callback?.call();
+                  setState(() {});
+                },
               ),
             ),
           )
